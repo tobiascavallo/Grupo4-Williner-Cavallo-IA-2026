@@ -16,9 +16,14 @@ TALADROS_POR_ROCA = {
 }
 
 def Planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[(0, 1), (0, 2)], muestras_igneas=[(1, 1), (1, 2)], muestras_sedimentarias=[(2, 3)]):
+                  
+    #           (ubicacion_rover, bateria, taladro, carga, muestras_i, muestras_s)
    
-    inital_state = (("r",(rover_inicio)), ("b",(bateria_inicial)), ("m_i",(muestras_igneas)), ("m_s",(muestras_sedimentarias)),("t",(None)),("a",0))#DUDA: el tipo de taladro con el que comienza a trabajar llega por parametro, no seteamos ninguno o cualquiera
+    INICIAL_STATE = (rover_inicio, bateria_inicial, None, (), muestras_igneas, muestras_sedimentarias)
     const_sombras = zonas_sombra
+
+    problema = ProblemAres1(INICIAL_STATE, const_sombras)
+    resultado = astar(problema)
 
 
 class ProblemAres1(SearchProblem):
@@ -49,5 +54,22 @@ class ProblemAres1(SearchProblem):
         return minutos, UC 
     
     def actions(self, state):
+        row, col = state[0]
+        available_actions = []
+
+        moves = [
+            (row - 1, col),
+            (row + 1, col),
+            (row - 2, col),
+            (row + 2, col),
+            (row, col - 1),
+            (row, col + 1),
+            (row, col - 2),
+            (row, col + 2)# QUEDE ACA DONDE ESTOY VIENDO COMO LIMITAR LOS MOVIMIENTO DENTRO DE LA GRILLA
+        ]
+
+        for new_row, new_col in moves:
+            if 0 < new_row < len()
+
         
 
