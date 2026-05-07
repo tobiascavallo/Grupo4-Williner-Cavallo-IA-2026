@@ -28,31 +28,26 @@ class ProblemAres1(SearchProblem):
         super().__init__(INICIAL_STATE)
         self.const_sombras = const_sombras
 
-    def cost(self, state, action, state2):
+    def cost(self, action):
         if action == "moverse":
             minutos = 1
-            UC = 1
-            
+             
         if action == "sobremarcha":
             minutos = 1
-            UC = 4
         
         if action == "equipar":
             minutos = 3
-            UC = 1
 
         if action == "recolectar":
             minutos = 2
-            UC = 3
         
         if action == "depositar":
             minutos = 1
-            UC = 1
         
         if action == "recargar":
             minutos = 4
 
-        return minutos, UC 
+        return minutos
     
     def actions(self, state):
         row, col = state[0]
@@ -139,7 +134,10 @@ class ProblemAres1(SearchProblem):
         if action == "recolectar":
             rover_carga = action[1]
             rover_bat -= 3
-            if action[1] == "ignea": #terminar esto, estaba haciendo lo de eliminar la muestra q se recolecto del mapa
+            if action[1] == "ignea":
+                coord_igneas = (x for x in coord_igneas if x != rover_pos)
+            elif action[1] == "sedimentaria":
+                coord_sedim = (x for x in coord_sedim if x != rover_pos)
 
         
         if action == "depositar":
@@ -150,6 +148,16 @@ class ProblemAres1(SearchProblem):
             rover_bat += 10
         
         return (tuple(rover_pos,rover_bat,rover_herr,rover_carga,coord_igneas,coord_sedim))
+    
+
+    def is_goal(self, state):
+        return len(state[4]) == 0 and len(state[5]) == 0 and len(state[3]) == 0
+    
+
+    def heuristic(self, state):
+        
+
+        
 
 
 
