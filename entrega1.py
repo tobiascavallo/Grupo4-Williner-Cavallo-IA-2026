@@ -9,17 +9,31 @@ from simpleai.search import (
     astar,
 )
 from simpleai.search.viewers import BaseViewer, WebViewer
+import math
 
 
-def Planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[(0, 1), (0, 2)], muestras_igneas=[(1, 1), (1, 2)], muestras_sedimentarias=[(2, 3)]):
+def planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[(0, 1), (0, 2)], muestras_igneas=[(1, 1), (1, 2)], muestras_sedimentarias=[(2, 3)]):
                   
     #           (ubicacion_rover, bateria, taladro, carga, muestras_i, muestras_s)
    
-    INICIAL_STATE = (rover_inicio, bateria_inicial, None, (), muestras_igneas, muestras_sedimentarias)
+    INICIAL_STATE = (rover_inicio, bateria_inicial, None, (), tuple(muestras_igneas), tuple(muestras_sedimentarias))
     const_sombras = zonas_sombra
 
     problema = ProblemAres1(INICIAL_STATE, const_sombras)
     resultado = astar(problema)
+
+    if resultado is not None:
+
+        acciones_finales = []
+        
+        for accion, estado in resultado.path():
+            if accion is not None:
+
+                acciones_finales.append(accion)
+        
+        return acciones_finales  
+    else:
+        return []
 
 
 class ProblemAres1(SearchProblem):
@@ -28,24 +42,21 @@ class ProblemAres1(SearchProblem):
         super().__init__(INICIAL_STATE)
         self.const_sombras = const_sombras
 
-    def cost(self, action):
-        if action == "moverse":
-            minutos = 1
-             
-        if action == "sobremarcha":
-            minutos = 1
-        
-        if action == "equipar":
-            minutos = 3
-
-        if action == "recolectar":
-            minutos = 2
-        
-        if action == "depositar":
-            minutos = 1
-        
-        if action == "recargar":
-            minutos = 4
+    def cost(self, state, action, state2):
+        if action[0] == "moverse":
+         minutos = 1
+        elif action[0] == "sobremarcha":
+         minutos = 4
+        elif action[0] == "equipar":
+         minutos = 3
+        elif action[0] == "recolectar":
+         minutos = 2
+        elif action[0] == "depositar":
+         minutos = 1
+        elif action[0] == "recargar":
+         minutos = 4
+        else:
+         minutos = 0
 
         return minutos
     
@@ -74,12 +85,14 @@ class ProblemAres1(SearchProblem):
         ]
 
 
-        for new_row, new_col in simple_moves and bateria > 1:                    #antes de agregar la accion de movimiento verificamos que la coordenada no sea negativo 
+        if bateria > 1:
+         for new_row, new_col in simple_moves:                    #antes de agregar la accion de movimiento verificamos que la coordenada no sea negativo 
             if new_row >= 0 and new_col >= 0:
                 available_actions.append(("moverse",(new_row,new_col)))
         
 
-        for new_row_s, new_col_s in sobremarchas and bateria > 4:                #antes de agregar la accion de sobremarcha verificamos que la coordenada no sea negativo 
+        if bateria > 4 :
+         for new_row_s, new_col_s in sobremarchas:                #antes de agregar la accion de sobremarcha verificamos que la coordenada no sea negativo 
             if new_row_s >= 0 and new_col_s >= 0:
                 available_actions.append(("sobremarcha",(new_row_s,new_col_s)))
         
@@ -105,7 +118,7 @@ class ProblemAres1(SearchProblem):
 
 
         if len(carga) == 2 and bateria > 1:                                                       #aca validamos que tengamos ambas muestras en la bodega para depositar
-            available_actions.append(("despositar", None))
+            available_actions.append(("depositar", None))
         elif len(carga) == 1 and not (coordenadas_ignea or coordenadas_sedimentaria):                   #aca verificamos el caso en el que se la ultima muestra para poder depositar solo una
             available_actions.append(("depositar", None))
             
@@ -113,41 +126,47 @@ class ProblemAres1(SearchProblem):
         return available_actions
     
     def result(self, state, action):
-        rover_pos = list(state[0])
-        rover_bat = list(state[1])
-        rover_herr = list(state[2])
+        rover_pos = state[0]
+        rover_bat = state[1]
+        rover_herr = state[2]
         rover_carga = list(state[3])
         coord_igneas = list(state[4])
-        coord_sedim= list(state[5])
+        coord_sedim = list(state[5])
 
-        if action == "moverse":
+        if action[0] == "moverse":
             rover_pos = action[1]
             rover_bat -= 1 
-        elif action == "sobremarcha":
+        elif action[0] == "sobremarcha":
             rover_pos = action[1]
             rover_bat -= 4
         
-        if action == "equipar":
+        if action[0] == "equipar":
             rover_herr = action[1]
             rover_bat -= 1
 
-        if action == "recolectar":
-            rover_carga = action[1]
+        if action[0] == "recolectar":
             rover_bat -= 3
+            rover_carga.append(action[1])
+
             if action[1] == "ignea":
-                coord_igneas = (x for x in coord_igneas if x != rover_pos)
+                coord_igneas.remove(rover_pos)
             elif action[1] == "sedimentaria":
-                coord_sedim = (x for x in coord_sedim if x != rover_pos)
+                coord_sedim.remove(rover_pos)
 
         
-        if action == "depositar":
+        if action[0] == "depositar":
             rover_carga = ()
             rover_bat -= 1
         
-        if action == "recargar":
+        if action[0] == "recargar":
             rover_bat += 10
         
-        return (tuple(rover_pos,rover_bat,rover_herr,rover_carga,coord_igneas,coord_sedim))
+        return (rover_pos,
+                rover_bat, 
+                rover_herr, 
+                tuple(rover_carga), 
+                tuple(coord_igneas), 
+                tuple(coord_sedim))
     
 
     def is_goal(self, state):
@@ -155,9 +174,31 @@ class ProblemAres1(SearchProblem):
     
 
     def heuristic(self, state):
+       pos = state[0]
+       coord_faltantes = state[4] + state[5]
+       costo_carga = len(state[3])
+    
+       afirmar_cambio_herramineta = len(state[4]) != 0 and len(state[5]) != 0
+
+       if len(coord_faltantes) == 0 and costo_carga == 0:
+          return 0
+       
+       pos_min = min((abs(pos[0] - f) + abs(pos[1] - c) for f, c in coord_faltantes))if coord_faltantes else 0
+
+       if afirmar_cambio_herramineta == True:
+          return pos_min/2 + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) + 2
+       else:
+          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes)
+          
+       
         
 
-        
+if __name__ == "__main__":
+    
+    acciones = planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[(0, 1), (0, 2)], muestras_igneas=[(1, 1), (1, 2)], muestras_sedimentarias=[(2, 3)])
+    
+   
+    print(acciones)
 
 
 
