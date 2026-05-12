@@ -46,13 +46,13 @@ class ProblemAres1(SearchProblem):
         if action[0] == "moverse":
          minutos = 1
         elif action[0] == "sobremarcha":
-         minutos = 4
+         minutos = 1
         elif action[0] == "equipar":
          minutos = 3
         elif action[0] == "recolectar":
          minutos = 2
         elif action[0] == "depositar":
-         minutos = 1
+         minutos = 1 * len(state[3])
         elif action[0] == "recargar":
          minutos = 4
         else:
@@ -86,15 +86,13 @@ class ProblemAres1(SearchProblem):
 
 
         if bateria > 1:
-         for new_row, new_col in simple_moves:                    #antes de agregar la accion de movimiento verificamos que la coordenada no sea negativo 
-            if new_row >= 0 and new_col >= 0:
-                available_actions.append(("moverse",(new_row,new_col)))
+         for new_row, new_col in simple_moves:                    #antes de agregar la accion de movimiento verificamos que la coordenada no sea negativo   
+          available_actions.append(("moverse",(new_row,new_col)))
         
 
         if bateria > 4 :
          for new_row_s, new_col_s in sobremarchas:                #antes de agregar la accion de sobremarcha verificamos que la coordenada no sea negativo 
-            if new_row_s >= 0 and new_col_s >= 0:
-                available_actions.append(("sobremarcha",(new_row_s,new_col_s)))
+          available_actions.append(("sobremarcha",(new_row_s,new_col_s)))
         
 
         if (row,col) in coordenadas_ignea:                                       #primero verificamos que el rover este parado sobre una roca ignea
@@ -117,9 +115,10 @@ class ProblemAres1(SearchProblem):
             available_actions.append(("recargar", None))
 
 
-        if len(carga) == 2 and bateria > 1:                                                       #aca validamos que tengamos ambas muestras en la bodega para depositar
+        if bateria > 1:
+         if len(carga) == 2:                                                       #aca validamos que tengamos ambas muestras en la bodega para depositar
             available_actions.append(("depositar", None))
-        elif len(carga) == 1 and not (coordenadas_ignea or coordenadas_sedimentaria):                   #aca verificamos el caso en el que se la ultima muestra para poder depositar solo una
+         elif len(carga) == 1 and not (coordenadas_ignea or coordenadas_sedimentaria):                   #aca verificamos el caso en el que se la ultima muestra para poder depositar solo una
             available_actions.append(("depositar", None))
             
 
@@ -183,19 +182,22 @@ class ProblemAres1(SearchProblem):
        if len(coord_faltantes) == 0 and costo_carga == 0:
           return 0
        
-       pos_min = min((abs(pos[0] - f) + abs(pos[1] - c) for f, c in coord_faltantes))if coord_faltantes else 0
+       pos_min = min((abs(pos[0] - f) + abs(pos[1] - c)) / 2 
+                     if pos[0] == f or pos[1] == c 
+                     else abs(pos[0] - f) + abs(pos[1] - c)
+                     for f, c in coord_faltantes) if coord_faltantes else 0
 
        if afirmar_cambio_herramineta == True:
-          return pos_min/2 + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) + 2
+          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) + 3
        else:
-          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes)
+          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) 
           
        
         
 
 if __name__ == "__main__":
     
-    acciones = planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[(0, 1), (0, 2)], muestras_igneas=[(1, 1), (1, 2)], muestras_sedimentarias=[(2, 3)])
+    acciones = planear_rover(rover_inicio=(0, 0), bateria_inicial=20, zonas_sombra=[], muestras_igneas=[(0, 1), (0, 2)], muestras_sedimentarias=[(1, 1)])
     
    
     print(acciones)
