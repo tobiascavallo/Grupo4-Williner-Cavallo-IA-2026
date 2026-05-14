@@ -111,7 +111,7 @@ class ProblemAres1(SearchProblem):
                 available_actions.append(("recolectar","sedimentaria"))
         
 
-        if (row,col) not in self.const_sombras and bateria < 20:
+        if (row,col) not in self.const_sombras and bateria < 12:
             available_actions.append(("recargar", None))
 
 
@@ -159,6 +159,8 @@ class ProblemAres1(SearchProblem):
         
         if action[0] == "recargar":
             rover_bat += 10
+            if rover_bat > 20:
+                rover_bat = 20
         
         return (rover_pos,
                 rover_bat, 
