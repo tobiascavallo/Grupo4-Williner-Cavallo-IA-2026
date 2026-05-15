@@ -173,29 +173,74 @@ class ProblemAres1(SearchProblem):
     def is_goal(self, state):
         return len(state[4]) == 0 and len(state[5]) == 0 and len(state[3]) == 0
     
-
     def heuristic(self, state):
-       pos = state[0]
-       coord_faltantes = state[4] + state[5]
-       costo_carga = len(state[3])
-    
-       afirmar_cambio_herramineta = len(state[4]) != 0 and len(state[5]) != 0
+        row, col = state[0]
+        bateria = state[1]
+        herramienta = state[2]
+        carga = state[3]
+        coordenadas_ignea = state[4]
+        coordenadas_sedimentaria = state[5]
 
-       if len(coord_faltantes) == 0 and costo_carga == 0:
-          return 0
-       
-       pos_min = min((abs(pos[0] - f) + abs(pos[1] - c)) / 2 
-                     if pos[0] == f or pos[1] == c 
-                     else abs(pos[0] - f) + abs(pos[1] - c)
-                     for f, c in coord_faltantes) if coord_faltantes else 0
-
-       if afirmar_cambio_herramineta == True:
-          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) + 3
-       else:
-          return pos_min + (len(coord_faltantes) * 2) + costo_carga + len(coord_faltantes) 
-          
-       
+        muestras_restantes = list(coordenadas_ignea) + list(coordenadas_sedimentaria)
         
+        tiempo_total = 0
+        bateria_total = 0
+
+        #receolectar
+        tiempo_total += len(muestras_restantes) * 2
+        bateria_total += len(muestras_restantes) * 3
+        
+        #depositar
+        total_a_depositar = len(muestras_restantes) + len(carga)
+        tiempo_total += total_a_depositar
+        bateria_total += total_a_depositar / 2
+
+        #herramienta
+        faltan_igneas = len(coordenadas_ignea)
+        faltan_sedim = len(coordenadas_sedimentaria)
+        
+        equipamientos = 0
+        if faltan_igneas and faltan_sedim:
+            if herramienta is None:
+                equipamientos = 2
+            else:
+                equipamientos = 1
+        elif faltan_igneas and herramienta != "termico":
+            equipamientos = 1
+        elif faltan_sedim and herramienta != "percusion":
+            equipamientos = 1
+            
+        tiempo_total += equipamientos * 3
+        bateria_total += equipamientos
+
+        #distancias
+        dist_total = 0
+        
+        dist_min_roca = min(abs(row - f) + abs(col - c) for f, c in muestras_restantes) if muestras_restantes else 0
+        max_dist_rocas = max(abs(f1 - f2) + abs(c1 - c2) for f1, c1 in muestras_restantes for f2, c2 in muestras_restantes) if muestras_restantes else 0
+        
+        dist_total = dist_min_roca + max_dist_rocas
+
+        #sobremarcha y recargas
+        min_tiempo_viaje = float('inf')
+        max_sobremarchas = dist_total // 2
+        for cant_sobremarcha in range(max_sobremarchas + 1):
+            mov_normales = dist_total - (2 * cant_sobremarcha)
+            
+            bat_gastada_viaje = (4 * cant_sobremarcha) + mov_normales
+            bat_necesaria = bateria_total + bat_gastada_viaje
+            
+            recargas = 0
+            if bat_necesaria > bateria:
+                bat_faltante = bat_necesaria - bateria
+                recargas = (bat_faltante + 10) // 10
+                
+            tiempo_opcion = cant_sobremarcha + mov_normales + (recargas * 4)
+            
+            if tiempo_opcion < min_tiempo_viaje:
+                min_tiempo_viaje = tiempo_opcion
+
+        return tiempo_total + min_tiempo_viaje
 
 if __name__ == "__main__":
     
