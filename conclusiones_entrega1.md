@@ -1,0 +1,7 @@
+La IA que utilizamos para resolver el ejercicio fue Gemini. Le pedimos que lo hiciera utilizando SimpleAI. Observamos que resolvió el problema utilizando los métodos cost, actions, heuristic, is_goal y result correctamente. Lo bueno de utilizar una IA para resolver el problema es que lo hace en cuestión de segundos y te puede servir como base para no comenzar desde cero.
+
+Observamos que la IA realiza la estructura principal de manera muy similar a la nuestra. Los métodos cumplen con lo pedido por el problema, solo que en algunos casos vemos una sintaxis más específica que no conocemos.
+
+La principal distinción que podemos ver es la longitud y complejidad de la heurística, ya que para hacerla solo tuvo en cuenta la distancia a las muestras más cercanas, el tiempo de recolección y el de depósito. En cambio, nosotros además agregamos la distancia más larga entre muestras, el consumo de batería para calcular las recargas necesarias, la utilización óptima de la sobremarcha y el costo de cambiar entre herramientas.
+
+Debido a la baja efectividad de la heurística, no pasó los tests correspondientes. Al correrlos, observamos que pasaba hasta el caso 5, y luego, a partir del 6 y 7, ya empezaba a demorar más de lo debido. Llegado al caso de prueba 8, no pudo pasarlo y tuvimos que cortarlo.
