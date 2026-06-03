@@ -15,9 +15,6 @@ def build_camp(camp_size, habs, generators, labs, deposits, airlocks, craters):
     variables += [f"air_{i}" for i in range(airlocks)]
     
     domains = {}
-    rows, cols = camp_size
-    craters_set = set(craters)
-
     camp = [(x, y) for x in range(camp_size[0]) for y in range(camp_size[1])]
     
     for var in variables:
@@ -136,7 +133,10 @@ def build_camp(camp_size, habs, generators, labs, deposits, airlocks, craters):
 
 
     problem = CspProblem(variables, domains, constraints)
-    resultado = backtrack(problem)
+    resultado = backtrack(problem,
+    variable_heuristic='mrv',        
+    value_heuristic='lcv',           
+    inference=True)
     
     if resultado is not None:
         resultado_final = []
